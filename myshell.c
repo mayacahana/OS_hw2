@@ -13,6 +13,7 @@
 int process_arglist(int count, char** arglist);
 int prepare(void);
 int finalize(void);
+int get_pipe_index(char** arglist, int count);
 
 int process_arglist(int count, char** arglist){
     pid_t child_pid;
@@ -40,7 +41,6 @@ int process_arglist(int count, char** arglist){
                 fprintf(stderr, "pipe failed. %s \n", strerror(errno));
                 exit(1);
             }
-            // rmv | from arglist
             arglist[pipe_index] = NULL;
             pipe_done = true;
         }
@@ -59,7 +59,7 @@ int process_arglist(int count, char** arglist){
                 dup2(fd[1-n],1-n);
             //execvp
             if (execvp(arglist[0+n*(pipe_index+1)], arglist+n*(pipe_index+1)) == -1){
-                fprintf(stderr, "execvp failed. %s\n", stderror(errno));
+                fprintf(stderr, "execvp failed. %s\n", strerror(errno));
                 exit(1);
             }
             n=2; //exit while if you child
