@@ -15,12 +15,12 @@ int prepare(void);
 int finalize(void);
 
 int process_arglist(int count, char** arglist){
-    pid_t child_pid, first_child_pid;
-    bool run_background = false;
+    pid_t child_pid;
     bool is_pipe;
-    int pipe_index , fd[2];
+    int pipe_index;
     struct sigaction siga;
     // checking if the last arg of the arglist is the & terminator
+    bool run_background = false;
     if (strcmp(arglist[count -1], "&") == 0){
         //run the child process int the background
         run_background = true;
@@ -32,7 +32,7 @@ int process_arglist(int count, char** arglist){
     // process is the parent of the prev one 
     pid_t child_a, child_b;
     bool pipe_done = false;
-    int n = 0;
+    int n = 0, fd[2];
     while (n < 2){ 
         if(is_pipe && !pipe_done){
             //pipe fd
