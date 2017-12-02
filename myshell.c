@@ -8,8 +8,16 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-//This function get an arglist a list of char* arguments provided by the user
-//
+/**
+ * My functions: 
+ * process_arlist
+ * prepare
+ * finalize
+ * get_pipe_index - return the '|' sign index, if found. -1 otherwise
+ * execv_child_proc - exe command according to specifications provided, with pipe or without as needed.
+ * 
+ * 
+ */
 int process_arglist(int count, char** arglist);
 int prepare(void);
 int finalize(void);
@@ -17,7 +25,9 @@ int get_pipe_index(char** arglist, int count);
 void execv_child_proc(char** arglist, int* pipe_fd, int std);
 
 void execv_child_proc(char** arglist, int* pipe_fd, int std){
+    // assure that were at command with pipe
     if (pipe_fd != NULL){
+        // if were already piped stdout(1)
         if (std) {
             close(pipe_fd[1]);
             if (dup2(pipe_fd[0],0) == -1){
@@ -25,7 +35,7 @@ void execv_child_proc(char** arglist, int* pipe_fd, int std){
                 exit(1);
             }
             close(pipe_fd[0]);
-        } else {
+        } else { //pipe stdout(1)
             close(pipe_fd[0]);
             if (dup2(pipe_fd[1],1) == -1){
                 perror("Error in dup2: ");
@@ -53,10 +63,10 @@ int process_arglist(int count, char** arglist){
     struct sigaction siga;
     memset(&siga, 0, sizeof(siga));
     siga.sa_handler = SIG_DFL;
-    // checking if the last arg of the arglist is the & terminator
     bool run_background = false;
+    // check if were having a piped command
     is_pipe = (pipe_index = get_pipe_index(arglist,count)) != -1;
-
+    // checking if the last arg of the arglist is the & terminator
     if (strcmp(arglist[count-1], "&") == 0){
         //run the child process int the background
         run_background = true;
@@ -68,8 +78,10 @@ int process_arglist(int count, char** arglist){
     // process is the parent of the prev one 
     pid_t child_a, child_b;
     bool pipe_done = false;
-    int n = 0, fd[2] = {0};
+    // file descriptor init
+    int fd[2] = {0};
     if (is_pipe) {
+        //pipe
         if(pipe(fd) < 0){
             fprintf(stderr, "create pipe failed. %s \n", strerror(errno));
             exit(1);
@@ -96,7 +108,8 @@ int process_arglist(int count, char** arglist){
         }
     }
     if (run_background)
-        return 1;
+        return 1; //dont wait for a process
+    // fork 2
     if (is_pipe) {
         if ((child_b = fork()) < 0) {
             fprintf(stderr, "fork() failed. %s \n", strerror(errno));
@@ -154,7 +167,7 @@ int get_pipe_index(char** arglist, int count){
     int i=0;
     for (i; i < count; i++){
         if(strcmp(arglist[i],"|") == 0){
-            //assuming no more than a single pipe is provided
+            // assuming no more than a single pipe is provided
             // and it's correctly placed
             return i;
         }
