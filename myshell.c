@@ -119,73 +119,12 @@ int process_arglist(int count, char** arglist){
             return 1;
         }
     } else {
-        if ((wait(&status) == child_a)){
+        if ((waitpid(child_a,&status,0) == child_a)){
             //just wait
+            return 1;
         }
     }
     return 1;
-    // ///////////
-
-    // while (n < 2) { 
-    //     if(is_pipe && !pipe_done){
-    //         //pipe fd
-    //         if(pipe(fd) < 0){
-    //             fprintf(stderr, "create pipe failed. %s \n", strerror(errno));
-    //             exit(1);
-    //         }
-    //         arglist[pipe_index] = NULL;
-    //         pipe_done = true;
-    //     }
-    //     // now fork
-    //     if ((child_pid = fork()) < 0){
-    //         fprintf(stderr, "fork() failed. %s \n", strerror(errno));
-    //         exit(1);
-    //     }
-    //     //if we got back the child
-    //     if (child_pid == 0) {
-    //         if (n == 0 && is_pipe){
-    //             child_a = child_pid;
-    //         }
-    //         //TODO: set sigint handler 
-    //         // if forground so sigint terminate
-    //         if (run_background){
-    //             siga.sa_handler = SIG_IGN;
-    //         } else {
-    //             siga.sa_handler = SIG_DFL;
-    //         }
-    //         if (sigaction(SIGINT, &siga,NULL)!=0){
-    //             fprintf(stderr,"Sigint failed. %s \n",strerror(errno));
-    //             exit(1);
-    //         }
-    //         if (is_pipe)
-    //             dup2(fd[1-n],1-n);
-    //         //execvp
-    //         if (execvp(arglist[0+n*(pipe_index+1)], arglist+n*(pipe_index+1)) == -1){
-    //             printf("%d \n", n);
-    //             fprintf(stderr, "execvp failed. %s\n", strerror(errno));
-    //             exit(1);
-    //         }
-    //         n=2; //exit while if you child
-    //     }
-    //     n++;
-    // }
-    // //parent case
-    // int status;
-    // if (child_pid > 0){
-    //     // if is_pipe is true we need to wait for our children
-    //     if (is_pipe){
-    //         //while the waitpid does not return the proccess id of our children
-    //         //Assumption: no background proccess!!
-    //         while(waitpid(child_pid, &status, 0) != child_pid && waitpid(child_a,&status,0)!=child_a){
-    //             //just wait
-    //         }
-    //     } else {
-    //         while(!run_background && (wait(&status)!=child_pid)){
-    //             //just wait
-    //         }
-    //     }
-    // }
-    // return 1;
 }
 
 int prepare(void){
@@ -197,15 +136,6 @@ int prepare(void){
         perror("Sigint error:");
         exit(1);
     }
-    //if we are child proc in foreground - should terminate
-    // struct sigaction child_sigint;
-    // memset(&child_sigint,0,sizeof(struct sigaction));
-    // child_sigint.sa_handler = &wait_child;
-    // child_sigint.sa_flags = SA_RESTART;
-    // if (sigaction(SIGCHLD, &child_sigint, NULL) != 0){
-    //     perror("Sigint child error:");
-    //     return -1;
-    // }
     if (sigaction(SIGINT, &sigign, NULL)){
         perror("Sigint error:");
         exit(1);
