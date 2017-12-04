@@ -24,6 +24,10 @@ int finalize(void);
 int get_pipe_index(char** arglist, int count);
 void execv_child_proc(char** arglist, int* pipe_fd, int std);
 
+void sigchld_hndlr(int sig){
+    while (waitpid((pid_t) -1, 0, WNOHANG) > 0) {}
+}
+
 void execv_child_proc(char** arglist, int* pipe_fd, int std){
     // assure that were at command with pipe
     if (pipe_fd != NULL){
@@ -92,6 +96,7 @@ int process_arglist(int count, char** arglist){
         fprintf(stderr, "fork() failed. %s \n", strerror(errno));
         exit(1);
     }
+    siga.sa_handler = run_background ? SIG_IGN : SIG_DFL;
     // we got the child process
     if (child_a == 0){
         if(!is_pipe){
@@ -149,7 +154,11 @@ int prepare(void){
         perror("Sigint error:");
         exit(1);
     }
-    if (sigaction(SIGINT, &sigign, NULL)){
+    struct sigaction sig_chld;
+    memset(&sig_chld, 0, sizeof(sig_chld));
+    sig_chld.sa_handler = &sigchld_hndlr;
+    sig_chld.sa_flags = SA_NOCLDSTOP | SA_RESTART;
+    if (sigaction(SIGCHLD, &sig_chld, NULL) != 0){
         perror("Sigint error:");
         exit(1);
     }
